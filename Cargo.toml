@@ -1,0 +1,13 @@
+[package]
+name = "treexml"
+version = "0.1.0"
+description = "An XML tree library for Rust"
+keywords = ["xml", "tree"]
+repository = "https://github.com/rahulg/treexml-rs"
+documentation = "https://rahulg.github.io/treexml-rs"
+readme = "README.md"
+license = "MIT"
+authors = ["Rahul AG <r@hul.ag>"]
+
+[dependencies]
+xml-rs = "0.2"
