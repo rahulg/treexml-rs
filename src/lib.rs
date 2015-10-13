@@ -32,18 +32,26 @@ use xml::reader::{EventReader, XmlEvent, Error};
 /// An XML element
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Element {
+    /// Tag prefix, used for namespacing: `xsl` in `xsl:for-each`
     pub prefix: Option<String>,
+    /// Tag name: `for-each` in `xsl:for-each`
     pub name: String,
+    /// Tag attributes
     pub attributes: HashMap<String, String>,
+    /// A vector of child elements
     pub children: Vec<Element>,
+    /// Contents of the element
     pub contents: Option<String>,
 }
 
 /// An XML document
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Document {
+    /// Version of the XML document
     pub version: XmlVersion,
+    /// Encoding of the XML document
     pub encoding: String,
+    /// Root tag of the XML document
     pub root: Option<Element>,
 }
 
