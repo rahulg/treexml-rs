@@ -1,4 +1,24 @@
 //! An element-tree style XML library
+//!
+//! # Examples
+//!
+//! ```
+//! use treexml::Document;
+//!
+//! let doc_raw = r#"
+//! <?xml version="1.1" encoding="UTF-8"?>
+//! <table>
+//!     <fruit type="apple">worm</fruit>
+//!     <vegetable />
+//! </table>
+//! "#;
+//!
+//! let doc = Document::parse(doc_raw.as_bytes()).unwrap();
+//! let root = doc.root.unwrap();
+//!
+//! let fruit = root.find_child(|tag| tag.name == "fruit").unwrap().clone();
+//! println!("{}", fruit.contents.unwrap());
+//! ```
 
 extern crate xml;
 
@@ -30,7 +50,9 @@ pub struct Document {
 /// Enumeration of XML versions
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum XmlVersion {
+    /// XML Version 1.0
     Version10,
+    /// XML Version 1.1
     Version11,
 }
 
@@ -48,33 +70,33 @@ impl Default for Element {
 
 impl Element {
 
-    /// Create a new element with the tag name `name`
+    /// Create a new `Element` with the tag name `name`
     pub fn new<S>(name: S) -> Element where S: Into<String> {
         Element{name: name.into(), .. Element::default()}
     }
 
-    /// Find a single child of the current element, given a predicate
+    /// Find a single child of the current `Element`, given a predicate
     pub fn find_child<P>(&self, predicate: P) -> Option<&Element>
         where P: for<'r> Fn(&'r &Element) -> bool
     {
         self.children.iter().find(predicate)
     }
 
-    /// Find a single child of the current element, given a predicate; returns a mutable borrow
+    /// Find a single child of the current `Element`, given a predicate; returns a mutable borrow
     pub fn find_child_mut<P>(&mut self, predicate: P) -> Option<&mut Element>
         where P: for<'r> FnMut(&'r &mut Element) -> bool
     {
         self.children.iter_mut().find(predicate)
     }
 
-    /// Filters the children of the current element, given a predicate
+    /// Filters the children of the current `Element`, given a predicate
     pub fn filter_children<P>(&self, predicate: P) -> Filter<Iter<Element>, P>
         where P: for<'r> Fn(&'r &Element) -> bool
     {
         self.children.iter().filter(predicate)
     }
 
-    /// Filters the children of the current element, given a predicate; returns a mutable iterator
+    /// Filters the children of the current `Element`, given a predicate; returns a mutable iterator
     pub fn filter_children_mut<P>(&mut self, predicate: P) -> Filter<IterMut<Element>, P>
         where P: for<'r> FnMut(&'r &mut Element) -> bool
     {
@@ -102,7 +124,7 @@ impl Document {
 
     /// Parse data from a reader to construct an XML document
     ///
-    /// # Errors
+    /// # Failures
     ///
     /// Passes any errors that the `xml-rs` library returns up the stack
     pub fn parse<R: Read>(r: R) -> Result<Document, Error> {
