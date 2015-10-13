@@ -48,28 +48,33 @@ impl Default for Element {
 
 impl Element {
 
+    /// Create a new element with the tag name `name`
     pub fn new<S>(name: S) -> Element where S: Into<String> {
         Element{name: name.into(), .. Element::default()}
     }
 
+    /// Find a single child of the current element, given a predicate
     pub fn find_child<P>(&self, predicate: P) -> Option<&Element>
         where P: for<'r> Fn(&'r &Element) -> bool
     {
         self.children.iter().find(predicate)
     }
 
+    /// Find a single child of the current element, given a predicate; returns a mutable borrow
     pub fn find_child_mut<P>(&mut self, predicate: P) -> Option<&mut Element>
         where P: for<'r> FnMut(&'r &mut Element) -> bool
     {
         self.children.iter_mut().find(predicate)
     }
 
+    /// Filters the children of the current element, given a predicate
     pub fn filter_children<P>(&self, predicate: P) -> Filter<Iter<Element>, P>
         where P: for<'r> Fn(&'r &Element) -> bool
     {
         self.children.iter().filter(predicate)
     }
 
+    /// Filters the children of the current element, given a predicate; returns a mutable iterator
     pub fn filter_children_mut<P>(&mut self, predicate: P) -> Filter<IterMut<Element>, P>
         where P: for<'r> FnMut(&'r &mut Element) -> bool
     {
@@ -90,6 +95,7 @@ impl Default for Document {
 
 impl Document {
 
+    /// Create a new `Document` with default values
     pub fn new() -> Document {
         Document{.. Document::default()}
     }
