@@ -4,6 +4,8 @@ extern crate xml;
 
 use std::collections::HashMap;
 use std::io::Read;
+use std::iter::Filter;
+use std::slice::{Iter, IterMut};
 
 use xml::reader::{EventReader, XmlEvent, Error};
 
@@ -45,9 +47,35 @@ impl Default for Element {
 }
 
 impl Element {
+
     pub fn new<S>(name: S) -> Element where S: Into<String> {
         Element{name: name.into(), .. Element::default()}
     }
+
+    pub fn find_child<P>(&self, predicate: P) -> Option<&Element>
+        where P: for<'r> Fn(&'r &Element) -> bool
+    {
+        self.children.iter().find(predicate)
+    }
+
+    pub fn find_child_mut<P>(&mut self, predicate: P) -> Option<&mut Element>
+        where P: for<'r> FnMut(&'r &mut Element) -> bool
+    {
+        self.children.iter_mut().find(predicate)
+    }
+
+    pub fn filter_children<P>(&self, predicate: P) -> Filter<Iter<Element>, P>
+        where P: for<'r> Fn(&'r &Element) -> bool
+    {
+        self.children.iter().filter(predicate)
+    }
+
+    pub fn filter_children_mut<P>(&mut self, predicate: P) -> Filter<IterMut<Element>, P>
+        where P: for<'r> FnMut(&'r &mut Element) -> bool
+    {
+        self.children.iter_mut().filter(predicate)
+    }
+
 }
 
 impl Default for Document {
