@@ -23,11 +23,41 @@
 extern crate xml;
 
 use std::collections::HashMap;
+use std::fmt;
 use std::io::Read;
 use std::iter::Filter;
 use std::slice::{Iter, IterMut};
 
 use xml::reader::{EventReader, XmlEvent};
+
+/// The common error type for all XML tree operations
+#[derive(Debug)]
+pub enum Error {
+    /// Error parsing input data into an XML tree
+    ParseError(xml::reader::Error),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::ParseError(ref e) => e.fmt(f),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::ParseError(ref e) => e.description(),
+        }
+    }
+}
+
+impl From<xml::reader::Error> for Error {
+    fn from(err: xml::reader::Error) -> Error {
+        Error::ParseError(err)
+    }
+}
 
 /// An XML element
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -135,7 +165,7 @@ impl Document {
     /// # Failures
     ///
     /// Passes any errors that the `xml-rs` library returns up the stack
-    pub fn parse<R: Read>(r: R) -> Result<Document, xml::reader::Error> {
+    pub fn parse<R: Read>(r: R) -> Result<Document, Error> {
 
         let mut reader = EventReader::new(r);
         let mut doc = Document::new();
@@ -186,7 +216,7 @@ impl Document {
     }
 
     /// Internal recursive function to parse children of `element`
-    fn parse_children<R: Read>(mut reader: &mut EventReader<R>, element: Element) -> Result<Element, xml::reader::Error> {
+    fn parse_children<R: Read>(mut reader: &mut EventReader<R>, element: Element) -> Result<Element, Error> {
 
         let mut me = element.clone();
 
