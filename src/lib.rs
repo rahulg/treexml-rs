@@ -27,7 +27,7 @@ use std::io::Read;
 use std::iter::Filter;
 use std::slice::{Iter, IterMut};
 
-use xml::reader::{EventReader, XmlEvent, Error};
+use xml::reader::{EventReader, XmlEvent};
 
 /// An XML element
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -135,7 +135,7 @@ impl Document {
     /// # Failures
     ///
     /// Passes any errors that the `xml-rs` library returns up the stack
-    pub fn parse<R: Read>(r: R) -> Result<Document, Error> {
+    pub fn parse<R: Read>(r: R) -> Result<Document, xml::reader::Error> {
 
         let mut reader = EventReader::new(r);
         let mut doc = Document::new();
@@ -186,7 +186,7 @@ impl Document {
     }
 
     /// Internal recursive function to parse children of `element`
-    fn parse_children<R: Read>(mut reader: &mut EventReader<R>, element: Element) -> Result<Element, Error> {
+    fn parse_children<R: Read>(mut reader: &mut EventReader<R>, element: Element) -> Result<Element, xml::reader::Error> {
 
         let mut me = element.clone();
 
