@@ -9,7 +9,7 @@ To use `treexml`, add the following to your project's `Cargo.toml`
 
 ```toml
 [dependencies]
-treexml = "0.1"
+treexml = "0.2"
 ```
 
 The package exposes a crate named `treexml`.
@@ -29,23 +29,19 @@ use treexml::Document;
 
 fn main() {
 
-	// ...
-	// code that opens a file / fetches data from an API and assigns r
-	// ...
+	let doc_raw = r#"
+	<?xml version="1.1" encoding="UTF-8"?>
+	<table>
+		<fruit type="apple">worm</fruit>
+		<vegetable />
+	</table>
+	"#;
 
-	let doc = Document::parse(r).unwrap();
+	let doc = Document::parse(doc_raw.as_bytes()).unwrap();
+	let root = doc.root.unwrap();
 
-	let elem = match doc.root {
-		None => panic!("no data"),
-		Some(r) => r.children[0].clone(),
-	};
-
-	let contents = match elem.contents {
-		None => "".to_owned(),
-		Some(s) => s.clone(),
-	};
-
-	println!("{} [{:?}] = {}", elem.name, elem.attributes, contents);
+	let fruit = root.find_child(|tag| tag.name == "fruit").unwrap().clone();
+	println!("{} [{:?}] = {}", fruit.name, fruit.attributes, fruit.contents.unwrap());
 	
 }
 ```

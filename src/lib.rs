@@ -17,7 +17,7 @@
 //! let root = doc.root.unwrap();
 //!
 //! let fruit = root.find_child(|tag| tag.name == "fruit").unwrap().clone();
-//! println!("{}", fruit.contents.unwrap());
+//! println!("{} [{:?}] = {}", fruit.name, fruit.attributes, fruit.contents.unwrap());
 //! ```
 
 extern crate xml;
