@@ -122,6 +122,71 @@ impl Element {
         Element{name: name.into(), .. Element::default()}
     }
 
+    /// Parse the contents of an element
+    fn parse<R: Read>(&mut self, mut reader: &mut xml::reader::EventReader<R>) -> Result<(), Error> {
+
+        use xml::reader::XmlEvent;
+
+        loop {
+            let ev = try!(reader.next());
+            match ev {
+                XmlEvent::StartElement{name, attributes, ..} => {
+
+                    let mut attr_map = HashMap::new();
+                    for attr in attributes {
+                        let attr_name = match attr.name.prefix {
+                            Some(prefix) => format!("{}:{}", prefix, attr.name.local_name),
+                            None => attr.name.local_name,
+                        };
+                        attr_map.insert(attr_name, attr.value);
+                    }
+
+                    let mut child = Element{
+                        prefix: name.prefix,
+                        name: name.local_name,
+                        attributes: attr_map,
+                        children: Vec::new(),
+                        contents: None
+                    };
+                    try!(child.parse(&mut reader));
+                    self.children.push(child);
+
+                },
+                XmlEvent::EndElement{name} => {
+
+                    if name.prefix == self.prefix && name.local_name == self.name {
+                        return Ok(());
+                    } else {
+                        // This should never happen, since the base xml library will panic first
+                        panic!("Unexpected closing tag: {}, expected {}", name, self.name);
+                    }
+
+                },
+                XmlEvent::Characters(s) => {
+
+                    let contents = match self.contents {
+                        Some(ref v) => v.clone(),
+                        None => String::new(),
+                    };
+                    self.contents = Some(contents + &s)
+
+                },
+                XmlEvent::CData(s) => {
+
+                    let contents = match self.contents {
+                        Some(ref v) => v.clone(),
+                        None => String::new(),
+                    };
+                    self.contents = Some(contents + "<![CDATA[" + &s + "]]>");
+
+                },
+                XmlEvent::Whitespace(_) => {},
+                XmlEvent::Comment(_) => {},
+                _ => {},
+            }
+        }
+    }
+
     /// Find a single child of the current `Element`, given a predicate
     pub fn find_child<P>(&self, predicate: P) -> Option<&Element>
         where P: for<'r> Fn(&'r &Element) -> bool
@@ -212,14 +277,15 @@ impl Document {
                         attr_map.insert(attr_name, attr.value);
                     }
 
-                    let root = Element{
+                    let mut root = Element{
                         prefix: name.prefix,
                         name: name.local_name,
                         attributes: attr_map,
                         children: Vec::new(),
                         contents: None,
                     };
-                    doc.root = Some(try!(Document::parse_children(&mut reader, root)));
+                    try!(root.parse(&mut reader));
+                    doc.root = Some(root);
 
                 },
                 XmlEvent::EndDocument => break,
@@ -231,70 +297,5 @@ impl Document {
 
     }
 
-    /// Internal recursive function to parse children of `element`
-    fn parse_children<R: Read>(mut reader: &mut xml::reader::EventReader<R>, element: Element) -> Result<Element, Error> {
-
-        use xml::reader::XmlEvent;
-
-        let mut me = element.clone();
-
-        loop {
-            let ev = try!(reader.next());
-            match ev {
-                XmlEvent::StartElement{name, attributes, ..} => {
-
-                    let mut attr_map = HashMap::new();
-                    for attr in attributes {
-                        let attr_name = match attr.name.prefix {
-                            Some(prefix) => format!("{}:{}", prefix, attr.name.local_name),
-                            None => attr.name.local_name,
-                        };
-                        attr_map.insert(attr_name, attr.value);
-                    }
-
-                    let child = Element{
-                        prefix: name.prefix,
-                        name: name.local_name,
-                        attributes: attr_map,
-                        children: Vec::new(),
-                        contents: None
-                    };
-                    me.children.push(try!(Document::parse_children(&mut reader, child)));
-
-                },
-                XmlEvent::EndElement{name} => {
-
-                    if name.prefix == me.prefix && name.local_name == me.name {
-                        return Ok(me);
-                    } else {
-                        // This should never happen, since the base xml library will panic first
-                        panic!("Unexpected closing tag: {}, expected {}", name, element.name);
-                    }
-
-                },
-                XmlEvent::Characters(s) => {
-
-                    let contents = match me.contents {
-                        Some(v) => v,
-                        None => String::new(),
-                    };
-                    me.contents = Some(contents + &s)
-
-                },
-                XmlEvent::CData(s) => {
-
-                    let contents = match me.contents {
-                        Some(v) => v,
-                        None => String::new(),
-                    };
-                    me.contents = Some(contents + "<![CDATA[" + &s + "]]>");
-
-                },
-                XmlEvent::Whitespace(_) => {},
-                XmlEvent::Comment(_) => {},
-                _ => {},
-            }
-        }
-    }
 
 }
