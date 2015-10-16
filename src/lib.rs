@@ -28,8 +28,6 @@ use std::io::Read;
 use std::iter::Filter;
 use std::slice::{Iter, IterMut};
 
-use xml::reader::{EventReader, XmlEvent};
-
 /// The common error type for all XML tree operations
 #[derive(Debug)]
 pub enum Error {
@@ -59,6 +57,35 @@ impl From<xml::reader::Error> for Error {
     }
 }
 
+/// Enumeration of XML versions
+///
+/// This exists solely because `xml-rs`'s XmlVersion doesn't implement Debug
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum XmlVersion {
+    /// XML Version 1.0
+    Version10,
+    /// XML Version 1.1
+    Version11,
+}
+
+impl From<xml::common::XmlVersion> for XmlVersion {
+    fn from(v: xml::common::XmlVersion) -> XmlVersion {
+        match v {
+            xml::common::XmlVersion::Version10 => XmlVersion::Version10,
+            xml::common::XmlVersion::Version11 => XmlVersion::Version11,
+        }
+    }
+}
+
+impl Into<xml::common::XmlVersion> for XmlVersion {
+    fn into(self) -> xml::common::XmlVersion {
+        match self {
+            XmlVersion::Version10 => xml::common::XmlVersion::Version10,
+            XmlVersion::Version11 => xml::common::XmlVersion::Version11,
+        }
+    }
+}
+
 /// An XML element
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Element {
@@ -72,26 +99,6 @@ pub struct Element {
     pub children: Vec<Element>,
     /// Contents of the element
     pub contents: Option<String>,
-}
-
-/// An XML document
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Document {
-    /// Version of the XML document
-    pub version: XmlVersion,
-    /// Encoding of the XML document
-    pub encoding: String,
-    /// Root tag of the XML document
-    pub root: Option<Element>,
-}
-
-/// Enumeration of XML versions
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum XmlVersion {
-    /// XML Version 1.0
-    Version10,
-    /// XML Version 1.1
-    Version11,
 }
 
 impl Default for Element {
@@ -109,7 +116,9 @@ impl Default for Element {
 impl Element {
 
     /// Create a new `Element` with the tag name `name`
-    pub fn new<S>(name: S) -> Element where S: Into<String> {
+    pub fn new<S>(name: S) -> Element
+        where S: Into<String>
+    {
         Element{name: name.into(), .. Element::default()}
     }
 
@@ -143,6 +152,17 @@ impl Element {
 
 }
 
+/// An XML document
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Document {
+    /// Version of the XML document
+    pub version: XmlVersion,
+    /// Encoding of the XML document
+    pub encoding: String,
+    /// Root tag of the XML document
+    pub root: Option<Element>,
+}
+
 impl Default for Document {
     fn default() -> Self {
         Document{
@@ -167,6 +187,8 @@ impl Document {
     /// Passes any errors that the `xml-rs` library returns up the stack
     pub fn parse<R: Read>(r: R) -> Result<Document, Error> {
 
+        use xml::reader::{EventReader, XmlEvent};
+
         let mut reader = EventReader::new(r);
         let mut doc = Document::new();
 
@@ -174,14 +196,8 @@ impl Document {
             let ev = try!(reader.next());
             match ev {
                 XmlEvent::StartDocument{version, encoding, ..} => {
-
-                    // xml-rs's XmlVersion doesn't derive Debug *sadface*
-                    doc.version = match version {
-                        xml::common::XmlVersion::Version10 => XmlVersion::Version10,
-                        xml::common::XmlVersion::Version11 => XmlVersion::Version11,
-                    };
+                    doc.version = XmlVersion::from(version);
                     doc.encoding = encoding;
-
                 },
                 XmlEvent::StartElement{name, attributes, ..} => {
 
@@ -216,7 +232,9 @@ impl Document {
     }
 
     /// Internal recursive function to parse children of `element`
-    fn parse_children<R: Read>(mut reader: &mut EventReader<R>, element: Element) -> Result<Element, Error> {
+    fn parse_children<R: Read>(mut reader: &mut xml::reader::EventReader<R>, element: Element) -> Result<Element, Error> {
+
+        use xml::reader::XmlEvent;
 
         let mut me = element.clone();
 
