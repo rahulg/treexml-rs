@@ -2,6 +2,8 @@
 //!
 //! # Examples
 //!
+//! ## Reading
+//!
 //! ```
 //! use treexml::Document;
 //!
@@ -19,12 +21,31 @@
 //! let fruit = root.find_child(|tag| tag.name == "fruit").unwrap().clone();
 //! println!("{} [{:?}] = {}", fruit.name, fruit.attributes, fruit.text.unwrap());
 //! ```
+//!
+//! ## Writing
+//!
+//! ```
+//! use treexml::{Document, Element};
+//!
+//! let mut root = Element::new("root");
+//! let mut child = Element::new("child");
+//! child.text = Some("contents".to_owned());
+//! root.children.push(child);
+//!
+//! let doc = Document{
+//!     root: Some(root),
+//!     .. Document::default()
+//! };
+//!
+//! println!("{}", doc);
+//! ```
 
 extern crate xml;
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::iter::Filter;
 use std::slice::{Iter, IterMut};
 
@@ -33,12 +54,14 @@ use std::slice::{Iter, IterMut};
 pub enum Error {
     /// Error parsing input data into an XML tree
     ParseError(xml::reader::Error),
+    WriteError(xml::writer::Error),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::ParseError(ref e) => e.fmt(f),
+            Error::WriteError(ref e) => e.fmt(f),
         }
     }
 }
@@ -47,6 +70,7 @@ impl std::error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::ParseError(ref e) => e.description(),
+            Error::WriteError(_) => "Error writing XML element",
         }
     }
 }
@@ -54,6 +78,12 @@ impl std::error::Error for Error {
 impl From<xml::reader::Error> for Error {
     fn from(err: xml::reader::Error) -> Error {
         Error::ParseError(err)
+    }
+}
+
+impl From<xml::writer::Error> for Error {
+    fn from(err: xml::writer::Error) -> Error {
+        Error::WriteError(err)
     }
 }
 
@@ -189,6 +219,45 @@ impl Element {
         }
     }
 
+    /// Write an element and its contents to `writer`
+    fn write<W: Write>(&self, writer: &mut xml::writer::EventWriter<W>) -> Result<(), Error> {
+
+        use xml::writer::XmlEvent;
+        use xml::name::Name;
+        use xml::attribute::Attribute;
+        use xml::namespace::Namespace;
+
+        let name = Name::local(&self.name);
+        let mut attributes = Vec::with_capacity(self.attributes.len());
+        for (k, v) in self.attributes.iter() {
+            attributes.push(Attribute{name: Name::local(k), value: v});
+        }
+
+        let namespace = Namespace::empty();
+
+        try!(writer.write(XmlEvent::StartElement{
+            name: name,
+            attributes: Cow::Owned(attributes),
+            namespace: Cow::Owned(namespace),
+        }));
+
+        if let Some(ref text) = self.text {
+            try!(writer.write(XmlEvent::Characters(&text[..])));
+        }
+        if let Some(ref cdata) = self.cdata {
+            try!(writer.write(XmlEvent::CData(&cdata[..])));
+        }
+
+        for ref e in &self.children {
+            try!(e.write(writer));
+        }
+
+        try!(writer.write(XmlEvent::EndElement{name: Some(name)}));
+
+        Ok(())
+
+    }
+
     /// Find a single child of the current `Element`, given a predicate
     pub fn find_child<P>(&self, predicate: P) -> Option<&Element>
         where P: for<'r> Fn(&'r &Element) -> bool
@@ -217,6 +286,19 @@ impl Element {
         self.children.iter_mut().filter(predicate)
     }
 
+}
+
+impl fmt::Display for Element {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let doc = Document{
+            root: Some(self.clone()),
+            .. Document::default()
+        };
+        let mut v = Vec::<u8>::new();
+        doc._write(&mut v, false, "  ").unwrap();
+        let s = String::from_utf8(v).unwrap();
+        f.write_str(&s[..])
+    }
 }
 
 /// An XML document
@@ -298,5 +380,44 @@ impl Document {
 
     }
 
+    pub fn write<W: Write>(&self, mut w: &mut W) -> Result<(), Error> {
+        self._write(&mut w, true, "  ")
+    }
 
+    /// Writes a document to `w`
+    fn _write<W: Write>(&self, w: &mut W, document_decl: bool, indent_str: &'static str) -> Result<(), Error> {
+
+        use xml::writer::{EmitterConfig, XmlEvent};
+
+        let mut writer = EmitterConfig::new()
+            .perform_indent(true)
+            .write_document_declaration(document_decl)
+            .indent_string(indent_str)
+            .create_writer(w);
+
+        if document_decl {
+            try!(writer.write(XmlEvent::StartDocument{
+                version: self.version.into(),
+                encoding: Some(&self.encoding),
+                standalone: None,
+            }));
+        }
+
+        if let Some(ref e) = self.root {
+            try!(e.write(&mut writer));
+        }
+
+        Ok(())
+
+    }
+
+}
+
+impl fmt::Display for Document {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut v = Vec::<u8>::new();
+        self.write(&mut v).unwrap();
+        let s = String::from_utf8(v).unwrap();
+        f.write_str(&s[..])
+    }
 }

@@ -48,7 +48,27 @@ fn main() {
 
 ## Writing XML Data
 
-This is currently not supported, but is on the cards for a future version.
+```
+extern crate treexml;
+
+use treexml::{Document, Element};
+
+fn main() {
+
+	let mut root = Element::new("root");
+	let mut child = Element::new("child");
+	child.text = Some("contents".to_owned());
+	root.children.push(child);
+
+	let doc = Document{
+		root: Some(root),
+		.. Document::default()
+	};
+
+	println!("{}", doc);
+
+}
+```
 
 ## Contributing
 
