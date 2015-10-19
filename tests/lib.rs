@@ -206,8 +206,8 @@ mod element {
 
         let mut ch1 = Element::new("child");
         let mut ch2 = Element::new("child");
-        ch1.contents = Some("1".to_owned());
-        ch2.contents = Some("2".to_owned());
+        ch1.text = Some("1".to_owned());
+        ch2.text = Some("2".to_owned());
 
         let children: Vec<&Element> = root.filter_children(|t| t.name == "child").collect();
         let children_ref = vec![&ch1, &ch2];
@@ -231,14 +231,14 @@ mod element {
 
         {
             let mut children: Vec<&mut Element> = root.filter_children_mut(|t| t.name == "child").collect();
-            children[0].contents = Some("4".to_owned());
-            children[1].contents = Some("5".to_owned());
+            children[0].text = Some("4".to_owned());
+            children[1].text = Some("5".to_owned());
         }
 
         let mut ch1 = Element::new("child");
         let mut ch2 = Element::new("child");
-        ch1.contents = Some("4".to_owned());
-        ch2.contents = Some("5".to_owned());
+        ch1.text = Some("4".to_owned());
+        ch2.text = Some("5".to_owned());
 
         let children: Vec<&Element> = root.filter_children(|t| t.name == "child").collect();
         let children_ref = vec![&ch1, &ch2];
@@ -262,7 +262,7 @@ mod cdata {
         let doc = Document::parse(doc_raw.as_bytes()).unwrap();
         let root = doc.root.unwrap();
 
-        assert_eq!(root.contents.unwrap(), "<![CDATA[data]]>".to_owned());
+        assert_eq!(root.cdata.unwrap(), "data".to_owned());
 
     }
 
@@ -277,8 +277,22 @@ mod cdata {
         let root = doc.root.unwrap();
 
         assert!(root.children.is_empty());
-        assert_eq!(root.contents.unwrap(), "<![CDATA[ <tag /> ]]>".to_owned());
+        assert_eq!(root.cdata.unwrap(), " <tag /> ".to_owned());
 
+    }
+
+    #[test]
+    fn text_across_cdata() {
+
+        let doc_raw = r#"
+        <root>text<![CDATA[cdata]]>text</root>
+        "#;
+
+        let doc = Document::parse(doc_raw.as_bytes()).unwrap();
+        let root = doc.root.unwrap();
+
+        assert_eq!(root.cdata, Some("cdata".to_owned()));
+        assert_eq!(root.text, Some("texttext".to_owned()));
     }
 
 }
@@ -302,7 +316,7 @@ mod complete {
 
         let mut c1 = Element::new("child");
         c1.attributes.insert("attr_a".to_owned(), "1".to_owned());
-        c1.contents = Some("content".to_owned());
+        c1.text = Some("content".to_owned());
 
         let mut c2 = Element::new("child");
         c2.attributes.insert("attr_a".to_owned(), "2".to_owned());

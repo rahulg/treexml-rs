@@ -17,7 +17,7 @@
 //! let root = doc.root.unwrap();
 //!
 //! let fruit = root.find_child(|tag| tag.name == "fruit").unwrap().clone();
-//! println!("{} [{:?}] = {}", fruit.name, fruit.attributes, fruit.contents.unwrap());
+//! println!("{} [{:?}] = {}", fruit.name, fruit.attributes, fruit.text.unwrap());
 //! ```
 
 extern crate xml;
@@ -98,7 +98,9 @@ pub struct Element {
     /// A vector of child elements
     pub children: Vec<Element>,
     /// Contents of the element
-    pub contents: Option<String>,
+    pub text: Option<String>,
+    /// CDATA contents of the element
+    pub cdata: Option<String>,
 }
 
 impl Default for Element {
@@ -108,7 +110,8 @@ impl Default for Element {
             name: "tag".to_owned(),
             attributes: HashMap::new(),
             children: Vec::new(),
-            contents: None,
+            text: None,
+            cdata: None,
         }
     }
 }
@@ -145,8 +148,7 @@ impl Element {
                         prefix: name.prefix,
                         name: name.local_name,
                         attributes: attr_map,
-                        children: Vec::new(),
-                        contents: None
+                        .. Element::default()
                     };
                     try!(child.parse(&mut reader));
                     self.children.push(child);
@@ -164,20 +166,20 @@ impl Element {
                 },
                 XmlEvent::Characters(s) => {
 
-                    let contents = match self.contents {
+                    let text = match self.text {
                         Some(ref v) => v.clone(),
                         None => String::new(),
                     };
-                    self.contents = Some(contents + &s)
+                    self.text = Some(text + &s)
 
                 },
                 XmlEvent::CData(s) => {
 
-                    let contents = match self.contents {
+                    let cdata = match self.cdata {
                         Some(ref v) => v.clone(),
                         None => String::new(),
                     };
-                    self.contents = Some(contents + "<![CDATA[" + &s + "]]>");
+                    self.cdata = Some(cdata + &s);
 
                 },
                 XmlEvent::Whitespace(_) => {},
@@ -281,8 +283,7 @@ impl Document {
                         prefix: name.prefix,
                         name: name.local_name,
                         attributes: attr_map,
-                        children: Vec::new(),
-                        contents: None,
+                        .. Element::default()
                     };
                     try!(root.parse(&mut reader));
                     doc.root = Some(root);
