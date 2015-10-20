@@ -49,6 +49,8 @@ use std::io::{Read, Write};
 use std::iter::Filter;
 use std::slice::{Iter, IterMut};
 
+use xml::common::XmlVersion as BaseXmlVersion;
+
 /// The common error type for all XML tree operations
 #[derive(Debug)]
 pub enum Error {
@@ -98,20 +100,20 @@ pub enum XmlVersion {
     Version11,
 }
 
-impl From<xml::common::XmlVersion> for XmlVersion {
-    fn from(v: xml::common::XmlVersion) -> XmlVersion {
+impl From<BaseXmlVersion> for XmlVersion {
+    fn from(v: BaseXmlVersion) -> XmlVersion {
         match v {
-            xml::common::XmlVersion::Version10 => XmlVersion::Version10,
-            xml::common::XmlVersion::Version11 => XmlVersion::Version11,
+            BaseXmlVersion::Version10 => XmlVersion::Version10,
+            BaseXmlVersion::Version11 => XmlVersion::Version11,
         }
     }
 }
 
-impl Into<xml::common::XmlVersion> for XmlVersion {
-    fn into(self) -> xml::common::XmlVersion {
+impl Into<BaseXmlVersion> for XmlVersion {
+    fn into(self) -> BaseXmlVersion {
         match self {
-            XmlVersion::Version10 => xml::common::XmlVersion::Version10,
-            XmlVersion::Version11 => xml::common::XmlVersion::Version11,
+            XmlVersion::Version10 => BaseXmlVersion::Version10,
+            XmlVersion::Version11 => BaseXmlVersion::Version11,
         }
     }
 }
