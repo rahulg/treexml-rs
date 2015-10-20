@@ -202,7 +202,7 @@ impl Element {
                         Some(ref v) => v.clone(),
                         None => String::new(),
                     };
-                    self.text = Some(text + &s)
+                    self.text = Some(text + &s);
 
                 },
                 XmlEvent::CData(s) => {
