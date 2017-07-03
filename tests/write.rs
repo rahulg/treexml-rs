@@ -29,6 +29,27 @@ mod write {
 
         }
 
+        #[test]
+        fn condensed_document() {
+
+            let mut root = Element::new("root");
+            let child = Element::new("child");
+            root.children.push(child);
+
+            let doc = Document {
+                root: Some(root),
+                ..Document::default()
+            };
+
+            let mut condensed = vec![];
+            doc.write_with(&mut condensed, false, "", false).unwrap();
+
+            assert_eq!(
+                String::from_utf8(condensed).unwrap(),
+                "<root><child /></root>"
+            );
+        }
+
     }
 
     mod element {

@@ -39,6 +39,16 @@
 //!
 //! println!("{}", doc);
 //! ```
+//!
+//!
+
+// `error_chain!` can recurse deeply
+#![recursion_limit = "1024"]
+
+#[macro_use]
+extern crate error_chain;
+
+mod errors;
 
 extern crate xml;
 
@@ -48,46 +58,11 @@ use std::fmt;
 use std::io::{Read, Write};
 use std::iter::Filter;
 use std::slice::{Iter, IterMut};
+use std::str::FromStr;
+
+pub use errors::*;
 
 use xml::common::XmlVersion as BaseXmlVersion;
-
-/// The common error type for all XML tree operations
-#[derive(Debug)]
-pub enum Error {
-    /// Error parsing input data into an XML tree
-    ParseError(xml::reader::Error),
-    WriteError(xml::writer::Error),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::ParseError(ref e) => e.fmt(f),
-            Error::WriteError(ref e) => e.fmt(f),
-        }
-    }
-}
-
-impl std::error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::ParseError(ref e) => e.description(),
-            Error::WriteError(_) => "Error writing XML element",
-        }
-    }
-}
-
-impl From<xml::reader::Error> for Error {
-    fn from(err: xml::reader::Error) -> Error {
-        Error::ParseError(err)
-    }
-}
-
-impl From<xml::writer::Error> for Error {
-    fn from(err: xml::writer::Error) -> Error {
-        Error::WriteError(err)
-    }
-}
 
 /// Enumeration of XML versions
 ///
@@ -161,10 +136,7 @@ impl Element {
     }
 
     /// Parse the contents of an element
-    fn parse<R: Read>(
-        &mut self,
-        mut reader: &mut xml::reader::EventReader<R>,
-    ) -> Result<(), Error> {
+    fn parse<R: Read>(&mut self, mut reader: &mut xml::reader::EventReader<R>) -> Result<()> {
 
         use xml::reader::XmlEvent;
 
@@ -230,7 +202,7 @@ impl Element {
     }
 
     /// Write an element and its contents to `writer`
-    fn write<W: Write>(&self, writer: &mut xml::writer::EventWriter<W>) -> Result<(), Error> {
+    fn write<W: Write>(&self, writer: &mut xml::writer::EventWriter<W>) -> Result<()> {
 
         use xml::writer::XmlEvent;
         use xml::name::Name;
@@ -287,6 +259,34 @@ impl Element {
         self.children.iter_mut().find(predicate)
     }
 
+    /// Transverse element using an xpath-like string: root/child/a
+    pub fn find(&self, path: &str) -> Result<&Element> {
+        Self::find_path(&path.split('/').collect::<Vec<&str>>(), path, self)
+    }
+
+    pub fn find_value<T: FromStr>(&self, path: &str) -> Result<Option<T>> {
+        let el = self.find(path)?;
+        if let Some(text) = el.text.as_ref() {
+            match T::from_str(text) {
+                Err(_) => bail!(ErrorKind::ValueFromStr(text.to_string())),
+                Ok(value) => Ok(Some(value)),
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn find_path<'a>(path: &[&str], original: &str, tree: &'a Element) -> Result<&'a Element> {
+        if path.is_empty() {
+            return Ok(tree);
+        }
+
+        match tree.find_child(|t| t.name == path[0]) {
+            Some(element) => Self::find_path(&path[1..], original, element),
+            None => bail!(ErrorKind::ElementNotFound(original.into())),
+        }
+    }
+
     /// Filters the children of the current `Element`, given a predicate
     pub fn filter_children<P>(&self, predicate: P) -> Filter<Iter<Element>, P>
     where
@@ -311,7 +311,7 @@ impl fmt::Display for Element {
             ..Document::default()
         };
         let mut v = Vec::<u8>::new();
-        doc._write(&mut v, false, "  ").unwrap();
+        doc.write_with(&mut v, false, "  ", true).unwrap();
         let s = String::from_utf8(v).unwrap();
         f.write_str(&s[..])
     }
@@ -349,7 +349,7 @@ impl Document {
     /// # Failures
     ///
     /// Passes any errors that the `xml-rs` library returns up the stack
-    pub fn parse<R: Read>(r: R) -> Result<Document, Error> {
+    pub fn parse<R: Read>(r: R) -> Result<Document> {
 
         use xml::reader::{EventReader, XmlEvent};
 
@@ -395,22 +395,23 @@ impl Document {
 
     }
 
-    pub fn write<W: Write>(&self, mut w: &mut W) -> Result<(), Error> {
-        self._write(&mut w, true, "  ")
+    pub fn write<W: Write>(&self, mut w: &mut W) -> Result<()> {
+        self.write_with(&mut w, true, "  ", true)
     }
 
     /// Writes a document to `w`
-    fn _write<W: Write>(
+    pub fn write_with<W: Write>(
         &self,
         w: &mut W,
         document_decl: bool,
         indent_str: &'static str,
-    ) -> Result<(), Error> {
+        indent: bool,
+    ) -> Result<()> {
 
         use xml::writer::{EmitterConfig, XmlEvent};
 
         let mut writer = EmitterConfig::new()
-            .perform_indent(true)
+            .perform_indent(indent)
             .write_document_declaration(document_decl)
             .indent_string(indent_str)
             .create_writer(w);

@@ -11,3 +11,4 @@ authors = ["Rahul AG <r@hul.ag>"]
 
 [dependencies]
 xml-rs = "0.6"
+error-chain = "0.10.0"
