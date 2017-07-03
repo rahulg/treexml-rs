@@ -135,6 +135,45 @@ impl Element {
         }
     }
 
+    pub fn attr<K, V>(mut self, key: K, value: V) -> Element
+    where
+        K: Into<String>,
+        V: Into<String>,
+    {
+        self.attributes.insert(key.into(), value.into());
+        self
+    }
+
+    pub fn text<S>(mut self, text: S) -> Element
+    where
+        S: Into<String>,
+    {
+        self.text = Some(text.into());
+        self
+    }
+
+    pub fn cdata<S>(mut self, cdata: S) -> Element
+    where
+        S: Into<String>,
+    {
+        self.cdata = Some(cdata.into());
+        self
+    }
+
+    pub fn prefix<S>(mut self, prefix: S) -> Element
+    where
+        S: Into<String>,
+    {
+        self.prefix = Some(prefix.into());
+        self
+    }
+
+    /// Append children to this `Element`
+    pub fn children(mut self, mut children: Vec<Element>) -> Element {
+        self.children.append(&mut children);
+        self
+    }
+
     /// Parse the contents of an element
     fn parse<R: Read>(&mut self, mut reader: &mut xml::reader::EventReader<R>) -> Result<()> {
 
@@ -259,7 +298,7 @@ impl Element {
         self.children.iter_mut().find(predicate)
     }
 
-    /// Transverse element using an xpath-like string: root/child/a
+    /// Traverse element using an xpath-like string: root/child/a
     pub fn find(&self, path: &str) -> Result<&Element> {
         Self::find_path(&path.split('/').collect::<Vec<&str>>(), path, self)
     }
