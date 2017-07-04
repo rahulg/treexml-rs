@@ -46,7 +46,7 @@ fn main() {
 
 ## Writing XML Data
 
-```
+```rust
 extern crate treexml;
 
 use treexml::{Document, Element};
