@@ -20,8 +20,6 @@ extern crate treexml;
 
 ## Reading XML Data
 
-Assuming `r` is something that implements `std::io::Read`:
-
 ```rust
 extern crate treexml;
 
