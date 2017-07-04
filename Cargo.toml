@@ -10,4 +10,4 @@ license = "MIT"
 authors = ["Rahul AG <r@hul.ag>"]
 
 [dependencies]
-xml-rs = "0.2"
+xml-rs = "0.6"
