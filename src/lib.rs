@@ -101,17 +101,17 @@ pub enum XmlVersion {
 }
 
 impl From<BaseXmlVersion> for XmlVersion {
-    fn from(v: BaseXmlVersion) -> XmlVersion {
-        match v {
+    fn from(value: BaseXmlVersion) -> XmlVersion {
+        match value {
             BaseXmlVersion::Version10 => XmlVersion::Version10,
             BaseXmlVersion::Version11 => XmlVersion::Version11,
         }
     }
 }
 
-impl Into<BaseXmlVersion> for XmlVersion {
-    fn into(self) -> BaseXmlVersion {
-        match self {
+impl From<XmlVersion> for BaseXmlVersion {
+    fn from(value: XmlVersion) -> BaseXmlVersion {
+        match value {
             XmlVersion::Version10 => BaseXmlVersion::Version10,
             XmlVersion::Version11 => BaseXmlVersion::Version11,
         }
