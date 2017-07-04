@@ -91,7 +91,7 @@ impl From<xml::writer::Error> for Error {
 
 /// Enumeration of XML versions
 ///
-/// This exists solely because `xml-rs`'s XmlVersion doesn't implement Debug
+/// This exists solely because `xml-rs`'s `XmlVersion` doesn't implement Debug
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum XmlVersion {
     /// XML Version 1.0
@@ -137,7 +137,7 @@ pub struct Element {
 
 impl Default for Element {
     fn default() -> Self {
-        Element{
+        Element {
             prefix: None,
             name: "tag".to_owned(),
             attributes: HashMap::new(),
@@ -149,23 +149,29 @@ impl Default for Element {
 }
 
 impl Element {
-
     /// Create a new `Element` with the tag name `name`
     pub fn new<S>(name: S) -> Element
-        where S: Into<String>
+    where
+        S: Into<String>,
     {
-        Element{name: name.into(), .. Element::default()}
+        Element {
+            name: name.into(),
+            ..Element::default()
+        }
     }
 
     /// Parse the contents of an element
-    fn parse<R: Read>(&mut self, mut reader: &mut xml::reader::EventReader<R>) -> Result<(), Error> {
+    fn parse<R: Read>(
+        &mut self,
+        mut reader: &mut xml::reader::EventReader<R>,
+    ) -> Result<(), Error> {
 
         use xml::reader::XmlEvent;
 
         loop {
-            let ev = try!(reader.next());
+            let ev = reader.next()?;
             match ev {
-                XmlEvent::StartElement{name, attributes, ..} => {
+                XmlEvent::StartElement { name, attributes, .. } => {
 
                     let mut attr_map = HashMap::new();
                     for attr in attributes {
@@ -176,17 +182,17 @@ impl Element {
                         attr_map.insert(attr_name, attr.value);
                     }
 
-                    let mut child = Element{
+                    let mut child = Element {
                         prefix: name.prefix,
                         name: name.local_name,
                         attributes: attr_map,
-                        .. Element::default()
+                        ..Element::default()
                     };
-                    try!(child.parse(&mut reader));
+                    child.parse(&mut reader)?;
                     self.children.push(child);
 
                 },
-                XmlEvent::EndElement{name} => {
+                XmlEvent::EndElement { name } => {
 
                     if name.prefix == self.prefix && name.local_name == self.name {
                         return Ok(());
@@ -214,9 +220,11 @@ impl Element {
                     self.cdata = Some(cdata + &s);
 
                 },
-                XmlEvent::Whitespace(_) => {},
+                XmlEvent::StartDocument { .. } |
+                XmlEvent::EndDocument |
+                XmlEvent::ProcessingInstruction { .. } |
+                XmlEvent::Whitespace(_) |
                 XmlEvent::Comment(_) => {},
-                _ => {},
             }
         }
     }
@@ -231,30 +239,33 @@ impl Element {
 
         let name = Name::local(&self.name);
         let mut attributes = Vec::with_capacity(self.attributes.len());
-        for (k, v) in self.attributes.iter() {
-            attributes.push(Attribute{name: Name::local(k), value: v});
+        for (k, v) in &self.attributes {
+            attributes.push(Attribute {
+                name: Name::local(k),
+                value: v,
+            });
         }
 
         let namespace = Namespace::empty();
 
-        try!(writer.write(XmlEvent::StartElement{
+        writer.write(XmlEvent::StartElement {
             name: name,
             attributes: Cow::Owned(attributes),
             namespace: Cow::Owned(namespace),
-        }));
+        })?;
 
         if let Some(ref text) = self.text {
-            try!(writer.write(XmlEvent::Characters(&text[..])));
+            writer.write(XmlEvent::Characters(&text[..]))?;
         }
         if let Some(ref cdata) = self.cdata {
-            try!(writer.write(XmlEvent::CData(&cdata[..])));
+            writer.write(XmlEvent::CData(&cdata[..]))?;
         }
 
-        for ref e in &self.children {
-            try!(e.write(writer));
+        for e in &self.children {
+            e.write(writer)?;
         }
 
-        try!(writer.write(XmlEvent::EndElement{name: Some(name)}));
+        writer.write(XmlEvent::EndElement { name: Some(name) })?;
 
         Ok(())
 
@@ -262,39 +273,42 @@ impl Element {
 
     /// Find a single child of the current `Element`, given a predicate
     pub fn find_child<P>(&self, predicate: P) -> Option<&Element>
-        where P: for<'r> Fn(&'r &Element) -> bool
+    where
+        P: for<'r> Fn(&'r &Element) -> bool,
     {
         self.children.iter().find(predicate)
     }
 
     /// Find a single child of the current `Element`, given a predicate; returns a mutable borrow
     pub fn find_child_mut<P>(&mut self, predicate: P) -> Option<&mut Element>
-        where P: for<'r> FnMut(&'r &mut Element) -> bool
+    where
+        P: for<'r> FnMut(&'r &mut Element) -> bool,
     {
         self.children.iter_mut().find(predicate)
     }
 
     /// Filters the children of the current `Element`, given a predicate
     pub fn filter_children<P>(&self, predicate: P) -> Filter<Iter<Element>, P>
-        where P: for<'r> Fn(&'r &Element) -> bool
+    where
+        P: for<'r> Fn(&'r &Element) -> bool,
     {
         self.children.iter().filter(predicate)
     }
 
     /// Filters the children of the current `Element`, given a predicate; returns a mutable iterator
     pub fn filter_children_mut<P>(&mut self, predicate: P) -> Filter<IterMut<Element>, P>
-        where P: for<'r> FnMut(&'r &mut Element) -> bool
+    where
+        P: for<'r> FnMut(&'r &mut Element) -> bool,
     {
         self.children.iter_mut().filter(predicate)
     }
-
 }
 
 impl fmt::Display for Element {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let doc = Document{
+        let doc = Document {
             root: Some(self.clone()),
-            .. Document::default()
+            ..Document::default()
         };
         let mut v = Vec::<u8>::new();
         doc._write(&mut v, false, "  ").unwrap();
@@ -316,7 +330,7 @@ pub struct Document {
 
 impl Default for Document {
     fn default() -> Self {
-        Document{
+        Document {
             version: XmlVersion::Version10,
             encoding: "UTF-8".to_owned(),
             root: None,
@@ -325,10 +339,9 @@ impl Default for Document {
 }
 
 impl Document {
-
     /// Create a new `Document` with default values
     pub fn new() -> Document {
-        Document{.. Document::default()}
+        Document { ..Document::default() }
     }
 
     /// Parse data from a reader to construct an XML document
@@ -344,13 +357,13 @@ impl Document {
         let mut doc = Document::new();
 
         loop {
-            let ev = try!(reader.next());
+            let ev = reader.next()?;
             match ev {
-                XmlEvent::StartDocument{version, encoding, ..} => {
+                XmlEvent::StartDocument { version, encoding, .. } => {
                     doc.version = XmlVersion::from(version);
                     doc.encoding = encoding;
                 },
-                XmlEvent::StartElement{name, attributes, ..} => {
+                XmlEvent::StartElement { name, attributes, .. } => {
 
                     // Start of the root element
 
@@ -363,13 +376,13 @@ impl Document {
                         attr_map.insert(attr_name, attr.value);
                     }
 
-                    let mut root = Element{
+                    let mut root = Element {
                         prefix: name.prefix,
                         name: name.local_name,
                         attributes: attr_map,
-                        .. Element::default()
+                        ..Element::default()
                     };
-                    try!(root.parse(&mut reader));
+                    root.parse(&mut reader)?;
                     doc.root = Some(root);
 
                 },
@@ -387,7 +400,12 @@ impl Document {
     }
 
     /// Writes a document to `w`
-    fn _write<W: Write>(&self, w: &mut W, document_decl: bool, indent_str: &'static str) -> Result<(), Error> {
+    fn _write<W: Write>(
+        &self,
+        w: &mut W,
+        document_decl: bool,
+        indent_str: &'static str,
+    ) -> Result<(), Error> {
 
         use xml::writer::{EmitterConfig, XmlEvent};
 
@@ -398,21 +416,20 @@ impl Document {
             .create_writer(w);
 
         if document_decl {
-            try!(writer.write(XmlEvent::StartDocument{
+            writer.write(XmlEvent::StartDocument {
                 version: self.version.into(),
                 encoding: Some(&self.encoding),
                 standalone: None,
-            }));
+            })?;
         }
 
         if let Some(ref e) = self.root {
-            try!(e.write(&mut writer));
+            e.write(&mut writer)?;
         }
 
         Ok(())
 
     }
-
 }
 
 impl fmt::Display for Document {

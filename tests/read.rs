@@ -3,7 +3,7 @@ extern crate treexml;
 mod read {
 
     mod document {
-        
+
         use treexml::{Document, XmlVersion};
 
         #[test]
@@ -232,7 +232,8 @@ mod read {
             let mut root = doc.root.unwrap();
 
             {
-                let mut children: Vec<&mut Element> = root.filter_children_mut(|t| t.name == "child").collect();
+                let mut children: Vec<&mut Element> =
+                    root.filter_children_mut(|t| t.name == "child").collect();
                 children[0].text = Some("4".to_owned());
                 children[1].text = Some("5".to_owned());
             }
@@ -346,7 +347,7 @@ mod read {
             root.children.push(c3);
             root.children.push(c4);
 
-            let doc_ref = Document{
+            let doc_ref = Document {
                 version: XmlVersion::Version11,
                 encoding: "UTF-8".to_owned(),
                 root: Some(root),

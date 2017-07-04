@@ -3,7 +3,7 @@ extern crate treexml;
 mod write {
 
     mod document {
-        
+
         use treexml::{Document, Element};
 
         #[test]
@@ -13,11 +13,11 @@ mod write {
             let child = Element::new("child");
             root.children.push(child);
 
-            let doc = Document{
+            let doc = Document {
                 root: Some(root),
-                .. Document::default()
+                ..Document::default()
             };
-        
+
             let doc_ref = concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root>\n",
@@ -43,9 +43,9 @@ mod write {
             let child2 = Element::new("child").clone();
             root.children.push(child);
 
-            let _ = Document{
+            let _ = Document {
                 root: Some(root),
-                .. Document::default()
+                ..Document::default()
             };
 
             let elem_ref = "<child />";
@@ -66,9 +66,9 @@ mod write {
             let mut root = Element::new("root");
             root.text = Some("text".to_owned());
 
-            let doc = Document{
+            let doc = Document {
                 root: Some(root),
-                .. Document::default()
+                ..Document::default()
             };
 
             let doc_ref = concat!(
@@ -86,9 +86,9 @@ mod write {
             let mut root = Element::new("root");
             root.text = Some("<tag />".to_owned());
 
-            let doc = Document{
+            let doc = Document {
                 root: Some(root),
-                .. Document::default()
+                ..Document::default()
             };
 
             let doc_ref = concat!(
@@ -112,9 +112,9 @@ mod write {
             let mut root = Element::new("root");
             root.cdata = Some("data".to_owned());
 
-            let doc = Document{
+            let doc = Document {
                 root: Some(root),
-                .. Document::default()
+                ..Document::default()
             };
 
             let doc_ref = concat!(
@@ -132,9 +132,9 @@ mod write {
             let mut root = Element::new("root");
             root.cdata = Some("<tag />".to_owned());
 
-            let doc = Document{
+            let doc = Document {
                 root: Some(root),
-                .. Document::default()
+                ..Document::default()
             };
 
             let doc_ref = concat!(

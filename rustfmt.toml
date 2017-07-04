@@ -1,0 +1,7 @@
+error_on_line_overflow = false
+write_mode = "Overwrite"
+reorder_imports = true
+reorder_imports_in_group = true
+reorder_imported_names = true
+match_block_trailing_comma = true
+use_try_shorthand = true
