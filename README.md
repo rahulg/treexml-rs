@@ -9,7 +9,7 @@ To use `treexml`, add the following to your project's `Cargo.toml`
 
 ```toml
 [dependencies]
-treexml = "0.5"
+treexml = "0.6"
 ```
 
 The package exposes a crate named `treexml`.
