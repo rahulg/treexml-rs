@@ -170,20 +170,28 @@ mod write {
     }
 
     mod builder {
-        use treexml::{Document, Element};
+        use treexml::{Document, ElementBuilder};
 
         #[test]
-        fn incremental_builder() {
+        fn incremental_build() {
 
-            let root = Element::new("root").children(vec![
-                Element::new("list").children(vec![
-                    Element::new("child"),
-                    Element::new("child").attr("class", "foo").text("bar"),
-                    Element::new("child")
-                        .attr("class", 22.to_string())
-                        .text(11.to_string()),
-                ]),
-            ]);
+            let root = ElementBuilder::new("root")
+                .children(vec![
+                    ElementBuilder::new("list")
+                        .children(vec![
+                            ElementBuilder::new("child").element(),
+                            ElementBuilder::new("child")
+                                .attr("class", "foo")
+                                .text("bar")
+                                .element(),
+                            ElementBuilder::new("child")
+                                .attr("class", 22.to_string())
+                                .text(11.to_string())
+                                .element(),
+                        ])
+                        .element(),
+                ])
+                .element();
 
             let doc = Document {
                 root: Some(root),
@@ -203,6 +211,25 @@ mod write {
 
             assert_eq!(doc.to_string(), doc_ref);
 
+        }
+
+        #[test]
+        fn incremental_build_multiline() {
+            let mut root = ElementBuilder::new("root");
+            root.attr("key", "value");
+            root.text("some-text");
+
+            let doc = Document {
+                root: Some(root.element()),
+                ..Document::default()
+            };
+
+            let doc_ref = concat!(
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
+                "<root key=\"value\">some-text</root>"
+            );
+
+            assert_eq!(doc.to_string(), doc_ref);
         }
 
     }

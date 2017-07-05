@@ -93,6 +93,71 @@ impl From<XmlVersion> for BaseXmlVersion {
     }
 }
 
+/// A builder for Element
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ElementBuilder {
+    /// The XML element we're working on
+    element: Element,
+}
+
+impl ElementBuilder {
+    /// Create a builder for an `Element` with the tag name `name`
+    pub fn new<S>(name: S) -> ElementBuilder
+    where
+        S: Into<String>,
+    {
+        ElementBuilder { element: Element::new(name) }
+    }
+
+    /// Set the element's prefix to `prefix`
+    pub fn prefix<S>(&mut self, prefix: S) -> &mut ElementBuilder
+    where
+        S: Into<String>,
+    {
+        self.element.prefix = Some(prefix.into());
+        self
+    }
+
+    /// Set the element's attribute `key` to `value`
+    pub fn attr<K, V>(&mut self, key: K, value: V) -> &mut ElementBuilder
+    where
+        K: Into<String>,
+        V: Into<String>,
+    {
+        self.element.attributes.insert(key.into(), value.into());
+        self
+    }
+
+    /// Set the element's text to `text`
+    pub fn text<S>(&mut self, text: S) -> &mut ElementBuilder
+    where
+        S: Into<String>,
+    {
+        self.element.text = Some(text.into());
+        self
+    }
+
+    /// Set the element's CDATA to `cdata`
+    pub fn cdata<S>(&mut self, cdata: S) -> &mut ElementBuilder
+    where
+        S: Into<String>,
+    {
+        self.element.cdata = Some(cdata.into());
+        self
+    }
+
+    /// Append children to this `Element`
+    pub fn children(&mut self, mut children: Vec<Element>) -> &mut ElementBuilder {
+        self.element.children.append(&mut children);
+        self
+    }
+
+    /// Creates an `Element` from the builder
+    pub fn element(&self) -> Element {
+        self.element.clone()
+    }
+}
+
 /// An XML element
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Element {
@@ -133,45 +198,6 @@ impl Element {
             name: name.into(),
             ..Element::default()
         }
-    }
-
-    pub fn attr<K, V>(mut self, key: K, value: V) -> Element
-    where
-        K: Into<String>,
-        V: Into<String>,
-    {
-        self.attributes.insert(key.into(), value.into());
-        self
-    }
-
-    pub fn text<S>(mut self, text: S) -> Element
-    where
-        S: Into<String>,
-    {
-        self.text = Some(text.into());
-        self
-    }
-
-    pub fn cdata<S>(mut self, cdata: S) -> Element
-    where
-        S: Into<String>,
-    {
-        self.cdata = Some(cdata.into());
-        self
-    }
-
-    pub fn prefix<S>(mut self, prefix: S) -> Element
-    where
-        S: Into<String>,
-    {
-        self.prefix = Some(prefix.into());
-        self
-    }
-
-    /// Append children to this `Element`
-    pub fn children(mut self, mut children: Vec<Element>) -> Element {
-        self.children.append(&mut children);
-        self
     }
 
     /// Parse the contents of an element
