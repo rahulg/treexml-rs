@@ -59,6 +59,7 @@ use std::io::{Read, Write};
 use std::iter::Filter;
 use std::slice::{Iter, IterMut};
 use std::str::FromStr;
+use std::string::ToString;
 
 pub use errors::*;
 
@@ -104,7 +105,7 @@ impl ElementBuilder {
     /// Create a builder for an `Element` with the tag name `name`
     pub fn new<S>(name: S) -> ElementBuilder
     where
-        S: Into<String>,
+        S: ToString,
     {
         ElementBuilder { element: Element::new(name) }
     }
@@ -112,37 +113,39 @@ impl ElementBuilder {
     /// Set the element's prefix to `prefix`
     pub fn prefix<S>(&mut self, prefix: S) -> &mut ElementBuilder
     where
-        S: Into<String>,
+        S: ToString,
     {
-        self.element.prefix = Some(prefix.into());
+        self.element.prefix = Some(prefix.to_string());
         self
     }
 
     /// Set the element's attribute `key` to `value`
     pub fn attr<K, V>(&mut self, key: K, value: V) -> &mut ElementBuilder
     where
-        K: Into<String>,
-        V: Into<String>,
+        K: ToString,
+        V: ToString,
     {
-        self.element.attributes.insert(key.into(), value.into());
+        self.element
+            .attributes
+            .insert(key.to_string(), value.to_string());
         self
     }
 
     /// Set the element's text to `text`
     pub fn text<S>(&mut self, text: S) -> &mut ElementBuilder
     where
-        S: Into<String>,
+        S: ToString,
     {
-        self.element.text = Some(text.into());
+        self.element.text = Some(text.to_string());
         self
     }
 
     /// Set the element's CDATA to `cdata`
     pub fn cdata<S>(&mut self, cdata: S) -> &mut ElementBuilder
     where
-        S: Into<String>,
+        S: ToString,
     {
-        self.element.cdata = Some(cdata.into());
+        self.element.cdata = Some(cdata.to_string());
         self
     }
 
@@ -192,10 +195,10 @@ impl Element {
     /// Create a new `Element` with the tag name `name`
     pub fn new<S>(name: S) -> Element
     where
-        S: Into<String>,
+        S: ToString,
     {
         Element {
-            name: name.into(),
+            name: name.to_string(),
             ..Element::default()
         }
     }

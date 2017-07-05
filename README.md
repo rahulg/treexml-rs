@@ -49,15 +49,18 @@ fn main() {
 ```rust
 extern crate treexml;
 
-use treexml::{Document, Element, ElementBuilder};
+use treexml::{Document, ElementBuilder as E};
 
 fn main() {
 
-	let mut root = Element::new("root");
-	let mut child = ElementBuilder::new("child")
-		.text("contents")
-		.element();
-	root.children.push(child);
+	let root = E::new("root").children(vec![
+		E::new("list").children(vec![
+			E::new("child").element(),
+			E::new("child").cdata("test data here").element(),
+			E::new("child").attr("class", "foo").text("bar").element(),
+			E::new("child").attr("class", 22).text(11).element(),
+		]).element(),
+	]).element();
 
 	let doc = Document{
 		root: Some(root),
