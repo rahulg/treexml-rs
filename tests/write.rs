@@ -92,7 +92,8 @@ mod write {
                 ..Document::default()
             };
 
-            let doc_ref = concat!(
+            let doc_ref =
+                concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root>text</root>",
             );
@@ -112,7 +113,8 @@ mod write {
                 ..Document::default()
             };
 
-            let doc_ref = concat!(
+            let doc_ref =
+                concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root>&lt;tag /></root>",
             );
@@ -138,7 +140,8 @@ mod write {
                 ..Document::default()
             };
 
-            let doc_ref = concat!(
+            let doc_ref =
+                concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root><![CDATA[data]]></root>",
             );
@@ -158,7 +161,8 @@ mod write {
                 ..Document::default()
             };
 
-            let doc_ref = concat!(
+            let doc_ref =
+                concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root><![CDATA[<tag />]]></root>",
             );
@@ -170,38 +174,27 @@ mod write {
     }
 
     mod builder {
-        use treexml::{Document, ElementBuilder};
+        use treexml::{Document, Element, ElementBuilder as E};
 
         #[test]
         fn incremental_build() {
 
-            let root = ElementBuilder::new("root")
-                .children(vec![
-                    ElementBuilder::new("list")
-                        .children(vec![
-                            ElementBuilder::new("child").element(),
-                            ElementBuilder::new("child")
-                                .attr("class", "foo")
-                                .text("bar")
-                                .element(),
-                            ElementBuilder::new("child")
-                                .attr("class", 22.to_string())
-                                .text(11.to_string())
-                                .element(),
-                        ])
-                        .element(),
-                ])
-                .element();
+            let preexisting: Element = E::new("preexisting").element();
 
-            let doc = Document {
-                root: Some(root),
-                ..Document::default()
-            };
+            let doc = Document::build(E::new("root").children(vec![
+                E::new("list").children(vec![
+                        &mut preexisting.into(),
+                        &mut E::new("child"),
+                        E::new("child").attr("class", "foo").text("bar"),
+                        E::new("child").attr("class", 22).text(11),
+                    ]),
+            ]));
 
             let doc_ref = concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root>\n",
                 "  <list>\n",
+                "    <preexisting />\n",
                 "    <child />\n",
                 "    <child class=\"foo\">bar</child>\n",
                 "    <child class=\"22\">11</child>\n",
@@ -215,14 +208,11 @@ mod write {
 
         #[test]
         fn incremental_build_multiline() {
-            let mut root = ElementBuilder::new("root");
+            let mut root = E::new("root");
             root.attr("key", "value");
             root.text("some-text");
 
-            let doc = Document {
-                root: Some(root.element()),
-                ..Document::default()
-            };
+            let doc = Document::build(&mut root);
 
             let doc_ref = concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
