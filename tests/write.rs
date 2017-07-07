@@ -92,8 +92,7 @@ mod write {
                 ..Document::default()
             };
 
-            let doc_ref =
-                concat!(
+            let doc_ref = concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root>text</root>",
             );
@@ -113,8 +112,7 @@ mod write {
                 ..Document::default()
             };
 
-            let doc_ref =
-                concat!(
+            let doc_ref = concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root>&lt;tag /></root>",
             );
@@ -140,8 +138,7 @@ mod write {
                 ..Document::default()
             };
 
-            let doc_ref =
-                concat!(
+            let doc_ref = concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root><![CDATA[data]]></root>",
             );
@@ -161,8 +158,7 @@ mod write {
                 ..Document::default()
             };
 
-            let doc_ref =
-                concat!(
+            let doc_ref = concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                 "<root><![CDATA[<tag />]]></root>",
             );
@@ -183,11 +179,11 @@ mod write {
 
             let doc = Document::build(E::new("root").children(vec![
                 E::new("list").children(vec![
-                        &mut preexisting.into(),
-                        &mut E::new("child"),
-                        E::new("child").attr("class", "foo").text("bar"),
-                        E::new("child").attr("class", 22).text(11),
-                    ]),
+                    &mut preexisting.into(),
+                    &mut E::new("child"),
+                    E::new("child").attr("class", "foo").text("bar"),
+                    E::new("child").attr("class", 22).text(11),
+                ]),
             ]));
 
             let doc_ref = concat!(

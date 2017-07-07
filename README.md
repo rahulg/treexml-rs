@@ -40,7 +40,7 @@ fn main() {
 
     let fruit = root.find_child(|tag| tag.name == "fruit").unwrap().clone();
     println!("{} [{:?}] = {}", fruit.name, fruit.attributes, fruit.contents.unwrap());
-    
+
 }
 ```
 

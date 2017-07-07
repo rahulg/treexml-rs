@@ -13,7 +13,9 @@ impl ElementBuilder {
     where
         S: ToString,
     {
-        ElementBuilder { element: Element::new(name) }
+        ElementBuilder {
+            element: Element::new(name),
+        }
     }
 
     /// Set the element's prefix to `prefix`
@@ -31,10 +33,9 @@ impl ElementBuilder {
         K: ToString,
         V: ToString,
     {
-        self.element.attributes.insert(
-            key.to_string(),
-            value.to_string(),
-        );
+        self.element
+            .attributes
+            .insert(key.to_string(), value.to_string());
         self
     }
 
@@ -58,10 +59,9 @@ impl ElementBuilder {
 
     /// Append children to this `Element`
     pub fn children(&mut self, children: Vec<&mut ElementBuilder>) -> &mut ElementBuilder {
-        self.element.children.append(&mut children
-            .into_iter()
-            .map(|i| i.element())
-            .collect());
+        self.element
+            .children
+            .append(&mut children.into_iter().map(|i| i.element()).collect());
         self
     }
 

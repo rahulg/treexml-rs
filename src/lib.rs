@@ -148,7 +148,9 @@ impl Element {
         loop {
             let ev = reader.next()?;
             match ev {
-                XmlEvent::StartElement { name, attributes, .. } => {
+                XmlEvent::StartElement {
+                    name, attributes, ..
+                } => {
 
                     let mut attr_map = HashMap::new();
                     for attr in attributes {
@@ -346,10 +348,12 @@ impl Default for Document {
 impl Document {
     /// Create a new `Document` with default values
     pub fn new() -> Document {
-        Document { ..Document::default() }
+        Document {
+            ..Document::default()
+        }
     }
 
-    /// Create a new `Document` with an Element or ElementBuilder.at its root.
+    /// Create a new `Document` with an Element or ElementBuilder at its root.
     pub fn build(root: &mut ElementBuilder) -> Self {
         Document {
             root: Some(root.element()),
@@ -372,11 +376,15 @@ impl Document {
         loop {
             let ev = reader.next()?;
             match ev {
-                XmlEvent::StartDocument { version, encoding, .. } => {
+                XmlEvent::StartDocument {
+                    version, encoding, ..
+                } => {
                     doc.version = XmlVersion::from(version);
                     doc.encoding = encoding;
                 },
-                XmlEvent::StartElement { name, attributes, .. } => {
+                XmlEvent::StartElement {
+                    name, attributes, ..
+                } => {
 
                     // Start of the root element
 
