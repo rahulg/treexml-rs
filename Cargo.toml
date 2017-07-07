@@ -1,6 +1,6 @@
 [package]
 name = "treexml"
-version = "0.6.0"
+version = "0.6.1"
 description = "An XML tree library for Rust"
 keywords = ["xml", "parse", "tree"]
 repository = "https://github.com/rahulg/treexml-rs"
