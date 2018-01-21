@@ -141,10 +141,7 @@ impl Element {
     }
 
     /// Parse the contents of an element
-    fn parse<R: Read>(
-        &mut self,
-        mut reader: &mut xml::reader::EventReader<R>,
-    ) -> Result<()> {
+    fn parse<R: Read>(&mut self, mut reader: &mut xml::reader::EventReader<R>) -> Result<()> {
         use xml::reader::XmlEvent;
 
         loop {
@@ -170,7 +167,7 @@ impl Element {
                     };
                     child.parse(&mut reader)?;
                     self.children.push(child);
-                },
+                }
                 XmlEvent::EndElement { name } => {
                     if name.prefix == self.prefix && name.local_name == self.name {
                         return Ok(());
@@ -178,26 +175,26 @@ impl Element {
                         // This should never happen, since the base xml library will panic first
                         panic!("Unexpected closing tag: {}, expected {}", name, self.name);
                     }
-                },
+                }
                 XmlEvent::Characters(s) => {
                     let text = match self.text {
                         Some(ref v) => v.clone(),
                         None => String::new(),
                     };
                     self.text = Some(text + &s);
-                },
+                }
                 XmlEvent::CData(s) => {
                     let cdata = match self.cdata {
                         Some(ref v) => v.clone(),
                         None => String::new(),
                     };
                     self.cdata = Some(cdata + &s);
-                },
+                }
                 XmlEvent::StartDocument { .. }
                 | XmlEvent::EndDocument
                 | XmlEvent::ProcessingInstruction { .. }
                 | XmlEvent::Whitespace(_)
-                | XmlEvent::Comment(_) => {},
+                | XmlEvent::Comment(_) => {}
             }
         }
     }
@@ -275,11 +272,7 @@ impl Element {
         }
     }
 
-    fn find_path<'a>(
-        path: &[&str],
-        original: &str,
-        tree: &'a Element,
-    ) -> Result<&'a Element> {
+    fn find_path<'a>(path: &[&str], original: &str, tree: &'a Element) -> Result<&'a Element> {
         if path.is_empty() {
             return Ok(tree);
         }
@@ -376,7 +369,7 @@ impl Document {
                 } => {
                     doc.version = XmlVersion::from(version);
                     doc.encoding = encoding;
-                },
+                }
                 XmlEvent::StartElement {
                     name, attributes, ..
                 } => {
@@ -399,9 +392,9 @@ impl Document {
                     };
                     root.parse(&mut reader)?;
                     doc.root = Some(root);
-                },
+                }
                 XmlEvent::EndDocument => break,
-                _ => {},
+                _ => {}
             }
         }
 

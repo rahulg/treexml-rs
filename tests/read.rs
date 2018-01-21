@@ -93,12 +93,10 @@ mod read {
     }
 
     mod element {
-
         use treexml::{Document, Element, Error, ErrorKind, Result};
 
         #[test]
         fn find_child_none() {
-
             let doc_raw = r#"
             <root></root>
             "#;
@@ -244,10 +242,9 @@ mod read {
             assert_eq!(root.find("a/deep/tree/leaf").unwrap(), &leaf);
 
             match root.find("z").unwrap_err() {
-                Error(ErrorKind::ElementNotFound(_), _) => {},
+                Error(ErrorKind::ElementNotFound(_), _) => {}
                 _ => panic!("Error should have been ElementNotFound"),
             }
-
         }
 
         #[test]
@@ -269,7 +266,7 @@ mod read {
             let cant_parse: Result<Option<i32>> = root.find_value("word");
             println!("cant parse was {:?}", cant_parse);
             match cant_parse.unwrap_err() {
-                Error(ErrorKind::ValueFromStr(_), _) => {},
+                Error(ErrorKind::ValueFromStr(_), _) => {}
                 _ => panic!("Error should have been ValueFromStr"),
             }
         }
