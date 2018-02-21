@@ -8,7 +8,6 @@ mod write {
 
         #[test]
         fn simple_document() {
-
             let mut root = Element::new("root");
             let child = Element::new("child");
             root.children.push(child);
@@ -26,12 +25,10 @@ mod write {
             );
 
             assert_eq!(doc.to_string(), doc_ref);
-
         }
 
         #[test]
         fn condensed_document() {
-
             let mut root = Element::new("root");
             let child = Element::new("child");
             root.children.push(child);
@@ -58,7 +55,6 @@ mod write {
 
         #[test]
         fn stringify() {
-
             let mut root = Element::new("root");
             let child = Element::new("child");
             let child2 = Element::new("child").clone();
@@ -72,7 +68,6 @@ mod write {
             let elem_ref = "<child />";
 
             assert_eq!(child2.to_string(), elem_ref);
-
         }
 
     }
@@ -83,7 +78,6 @@ mod write {
 
         #[test]
         fn plain_text() {
-
             let mut root = Element::new("root");
             root.text = Some("text".to_owned());
 
@@ -98,12 +92,10 @@ mod write {
             );
 
             assert_eq!(doc.to_string(), doc_ref);
-
         }
 
         #[test]
         fn tags_in_text() {
-
             let mut root = Element::new("root");
             root.text = Some("<tag />".to_owned());
 
@@ -118,7 +110,6 @@ mod write {
             );
 
             assert_eq!(doc.to_string(), doc_ref);
-
         }
 
     }
@@ -129,7 +120,6 @@ mod write {
 
         #[test]
         fn plain_text() {
-
             let mut root = Element::new("root");
             root.cdata = Some("data".to_owned());
 
@@ -144,12 +134,10 @@ mod write {
             );
 
             assert_eq!(doc.to_string(), doc_ref);
-
         }
 
         #[test]
         fn nested_tags() {
-
             let mut root = Element::new("root");
             root.cdata = Some("<tag />".to_owned());
 
@@ -164,7 +152,6 @@ mod write {
             );
 
             assert_eq!(doc.to_string(), doc_ref);
-
         }
 
     }
@@ -174,7 +161,6 @@ mod write {
 
         #[test]
         fn incremental_build() {
-
             let preexisting: Element = E::new("preexisting").element();
 
             let doc = Document::build(E::new("root").children(vec![
@@ -199,7 +185,6 @@ mod write {
             );
 
             assert_eq!(doc.to_string(), doc_ref);
-
         }
 
         #[test]

@@ -141,8 +141,10 @@ impl Element {
     }
 
     /// Parse the contents of an element
-    fn parse<R: Read>(&mut self, mut reader: &mut xml::reader::EventReader<R>) -> Result<()> {
-
+    fn parse<R: Read>(
+        &mut self,
+        mut reader: &mut xml::reader::EventReader<R>,
+    ) -> Result<()> {
         use xml::reader::XmlEvent;
 
         loop {
@@ -151,7 +153,6 @@ impl Element {
                 XmlEvent::StartElement {
                     name, attributes, ..
                 } => {
-
                     let mut attr_map = HashMap::new();
                     for attr in attributes {
                         let attr_name = match attr.name.prefix {
@@ -169,52 +170,44 @@ impl Element {
                     };
                     child.parse(&mut reader)?;
                     self.children.push(child);
-
                 },
                 XmlEvent::EndElement { name } => {
-
                     if name.prefix == self.prefix && name.local_name == self.name {
                         return Ok(());
                     } else {
                         // This should never happen, since the base xml library will panic first
                         panic!("Unexpected closing tag: {}, expected {}", name, self.name);
                     }
-
                 },
                 XmlEvent::Characters(s) => {
-
                     let text = match self.text {
                         Some(ref v) => v.clone(),
                         None => String::new(),
                     };
                     self.text = Some(text + &s);
-
                 },
                 XmlEvent::CData(s) => {
-
                     let cdata = match self.cdata {
                         Some(ref v) => v.clone(),
                         None => String::new(),
                     };
                     self.cdata = Some(cdata + &s);
-
                 },
-                XmlEvent::StartDocument { .. } |
-                XmlEvent::EndDocument |
-                XmlEvent::ProcessingInstruction { .. } |
-                XmlEvent::Whitespace(_) |
-                XmlEvent::Comment(_) => {},
+                XmlEvent::StartDocument { .. }
+                | XmlEvent::EndDocument
+                | XmlEvent::ProcessingInstruction { .. }
+                | XmlEvent::Whitespace(_)
+                | XmlEvent::Comment(_) => {},
             }
         }
     }
 
     /// Write an element and its contents to `writer`
     fn write<W: Write>(&self, writer: &mut xml::writer::EventWriter<W>) -> Result<()> {
-
-        use xml::writer::XmlEvent;
-        use xml::name::Name;
         use xml::attribute::Attribute;
+        use xml::name::Name;
         use xml::namespace::Namespace;
+        use xml::writer::XmlEvent;
 
         let name = Name::local(&self.name);
         let mut attributes = Vec::with_capacity(self.attributes.len());
@@ -247,7 +240,6 @@ impl Element {
         writer.write(XmlEvent::EndElement { name: Some(name) })?;
 
         Ok(())
-
     }
 
     /// Find a single child of the current `Element`, given a predicate
@@ -283,7 +275,11 @@ impl Element {
         }
     }
 
-    fn find_path<'a>(path: &[&str], original: &str, tree: &'a Element) -> Result<&'a Element> {
+    fn find_path<'a>(
+        path: &[&str],
+        original: &str,
+        tree: &'a Element,
+    ) -> Result<&'a Element> {
         if path.is_empty() {
             return Ok(tree);
         }
@@ -367,7 +363,6 @@ impl Document {
     ///
     /// Passes any errors that the `xml-rs` library returns up the stack
     pub fn parse<R: Read>(r: R) -> Result<Document> {
-
         use xml::reader::{EventReader, XmlEvent};
 
         let mut reader = EventReader::new(r);
@@ -385,7 +380,6 @@ impl Document {
                 XmlEvent::StartElement {
                     name, attributes, ..
                 } => {
-
                     // Start of the root element
 
                     let mut attr_map = HashMap::new();
@@ -405,7 +399,6 @@ impl Document {
                     };
                     root.parse(&mut reader)?;
                     doc.root = Some(root);
-
                 },
                 XmlEvent::EndDocument => break,
                 _ => {},
@@ -413,7 +406,6 @@ impl Document {
         }
 
         Ok(doc)
-
     }
 
     pub fn write<W: Write>(&self, mut w: &mut W) -> Result<()> {
@@ -428,7 +420,6 @@ impl Document {
         indent_str: &'static str,
         indent: bool,
     ) -> Result<()> {
-
         use xml::writer::{EmitterConfig, XmlEvent};
 
         let mut writer = EmitterConfig::new()
@@ -450,7 +441,6 @@ impl Document {
         }
 
         Ok(())
-
     }
 }
 
