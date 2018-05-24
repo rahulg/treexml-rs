@@ -46,7 +46,7 @@
 #![recursion_limit = "1024"]
 
 #[macro_use]
-extern crate error_chain;
+extern crate failure;
 
 mod errors;
 
@@ -141,7 +141,10 @@ impl Element {
     }
 
     /// Parse the contents of an element
-    fn parse<R: Read>(&mut self, mut reader: &mut xml::reader::EventReader<R>) -> Result<()> {
+    fn parse<R: Read>(
+        &mut self,
+        mut reader: &mut xml::reader::EventReader<R>,
+    ) -> Result<(), Error> {
         use xml::reader::XmlEvent;
 
         loop {
@@ -200,7 +203,7 @@ impl Element {
     }
 
     /// Write an element and its contents to `writer`
-    fn write<W: Write>(&self, writer: &mut xml::writer::EventWriter<W>) -> Result<()> {
+    fn write<W: Write>(&self, writer: &mut xml::writer::EventWriter<W>) -> Result<(), Error> {
         use xml::attribute::Attribute;
         use xml::name::Name;
         use xml::namespace::Namespace;
@@ -256,15 +259,17 @@ impl Element {
     }
 
     /// Traverse element using an xpath-like string: root/child/a
-    pub fn find(&self, path: &str) -> Result<&Element> {
+    pub fn find(&self, path: &str) -> Result<&Element, Error> {
         Self::find_path(&path.split('/').collect::<Vec<&str>>(), path, self)
     }
 
-    pub fn find_value<T: FromStr>(&self, path: &str) -> Result<Option<T>> {
+    pub fn find_value<T: FromStr>(&self, path: &str) -> Result<Option<T>, Error> {
         let el = self.find(path)?;
         if let Some(text) = el.text.as_ref() {
             match T::from_str(text) {
-                Err(_) => bail!(ErrorKind::ValueFromStr(text.to_string())),
+                Err(_) => Err(errors::Error::ValueFromStr {
+                    t: text.to_string(),
+                }.into()),
                 Ok(value) => Ok(Some(value)),
             }
         } else {
@@ -272,14 +277,18 @@ impl Element {
         }
     }
 
-    fn find_path<'a>(path: &[&str], original: &str, tree: &'a Element) -> Result<&'a Element> {
+    fn find_path<'a>(
+        path: &[&str],
+        original: &str,
+        tree: &'a Element,
+    ) -> Result<&'a Element, Error> {
         if path.is_empty() {
             return Ok(tree);
         }
 
         match tree.find_child(|t| t.name == path[0]) {
             Some(element) => Self::find_path(&path[1..], original, element),
-            None => bail!(ErrorKind::ElementNotFound(original.into())),
+            None => Err(errors::Error::ElementNotFound { t: original.into() }.into()),
         }
     }
 
@@ -355,7 +364,7 @@ impl Document {
     /// # Failures
     ///
     /// Passes any errors that the `xml-rs` library returns up the stack
-    pub fn parse<R: Read>(r: R) -> Result<Document> {
+    pub fn parse<R: Read>(r: R) -> Result<Document, Error> {
         use xml::reader::{EventReader, XmlEvent};
 
         let mut reader = EventReader::new(r);
@@ -401,7 +410,7 @@ impl Document {
         Ok(doc)
     }
 
-    pub fn write<W: Write>(&self, mut w: &mut W) -> Result<()> {
+    pub fn write<W: Write>(&self, mut w: &mut W) -> Result<(), Error> {
         self.write_with(&mut w, true, "  ", true)
     }
 
@@ -412,7 +421,7 @@ impl Document {
         document_decl: bool,
         indent_str: &'static str,
         indent: bool,
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         use xml::writer::{EmitterConfig, XmlEvent};
 
         let mut writer = EmitterConfig::new()
