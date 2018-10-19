@@ -48,6 +48,8 @@
 #[macro_use]
 extern crate failure;
 
+extern crate indexmap;
+
 mod errors;
 
 extern crate xml;
@@ -55,7 +57,6 @@ extern crate xml;
 mod builder;
 
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::fmt;
 use std::io::{Read, Write};
 use std::iter::Filter;
@@ -66,6 +67,8 @@ use std::string::ToString;
 pub use errors::*;
 
 pub use builder::*;
+
+use indexmap::IndexMap;
 
 use xml::common::XmlVersion as BaseXmlVersion;
 
@@ -106,7 +109,7 @@ pub struct Element {
     /// Tag name: `for-each` in `xsl:for-each`
     pub name: String,
     /// Tag attributes
-    pub attributes: HashMap<String, String>,
+    pub attributes: IndexMap<String, String>,
     /// A vector of child elements
     pub children: Vec<Element>,
     /// Contents of the element
@@ -120,7 +123,7 @@ impl Default for Element {
         Element {
             prefix: None,
             name: "tag".to_owned(),
-            attributes: HashMap::new(),
+            attributes: IndexMap::new(),
             children: Vec::new(),
             text: None,
             cdata: None,
@@ -153,7 +156,7 @@ impl Element {
                 XmlEvent::StartElement {
                     name, attributes, ..
                 } => {
-                    let mut attr_map = HashMap::new();
+                    let mut attr_map = IndexMap::new();
                     for attr in attributes {
                         let attr_name = match attr.name.prefix {
                             Some(prefix) => format!("{}:{}", prefix, attr.name.local_name),
@@ -384,7 +387,7 @@ impl Document {
                 } => {
                     // Start of the root element
 
-                    let mut attr_map = HashMap::new();
+                    let mut attr_map = IndexMap::new();
                     for attr in attributes {
                         let attr_name = match attr.name.prefix {
                             Some(prefix) => format!("{}:{}", prefix, attr.name.local_name),
