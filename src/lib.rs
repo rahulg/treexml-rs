@@ -272,8 +272,7 @@ impl Element {
             match T::from_str(text) {
                 Err(_) => Err(errors::Error::ValueFromStr {
                     t: text.to_string(),
-                }
-                .into()),
+                }),
                 Ok(value) => Ok(Some(value)),
             }
         } else {
@@ -292,7 +291,7 @@ impl Element {
 
         match tree.find_child(|t| t.name == path[0]) {
             Some(element) => Self::find_path(&path[1..], original, element),
-            None => Err(errors::Error::ElementNotFound { t: original.into() }.into()),
+            None => Err(errors::Error::ElementNotFound { t: original.into() }),
         }
     }
 
