@@ -53,8 +53,8 @@ use treexml::{Document, ElementBuilder as E};
 
 fn main() {
     let mut something = E::new("something");
-    root.attr("key", "value");
-    root.text("some-text");
+    something.attr("key", "value");
+    something.text("some-text");
 
     let doc = Document::build(
         E::new("root").children(vec![
