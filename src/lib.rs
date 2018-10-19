@@ -272,7 +272,8 @@ impl Element {
             match T::from_str(text) {
                 Err(_) => Err(errors::Error::ValueFromStr {
                     t: text.to_string(),
-                }.into()),
+                }
+                .into()),
                 Ok(value) => Ok(Some(value)),
             }
         } else {

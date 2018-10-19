@@ -163,14 +163,13 @@ mod write {
         fn incremental_build() {
             let preexisting: Element = E::new("preexisting").element();
 
-            let doc = Document::build(E::new("root").children(vec![
-                E::new("list").children(vec![
+            let doc =
+                Document::build(E::new("root").children(vec![E::new("list").children(vec![
                     &mut preexisting.into(),
                     &mut E::new("child"),
                     E::new("child").attr("class", "foo").text("bar"),
                     E::new("child").attr("class", 22).text(11),
-                ]),
-            ]));
+                ])]));
 
             let doc_ref = concat!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
