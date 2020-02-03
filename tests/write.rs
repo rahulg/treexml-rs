@@ -46,7 +46,6 @@ mod write {
                 "<root><child /></root>"
             );
         }
-
     }
 
     mod element {
@@ -69,7 +68,6 @@ mod write {
 
             assert_eq!(child2.to_string(), elem_ref);
         }
-
     }
 
     mod contents {
@@ -111,7 +109,6 @@ mod write {
 
             assert_eq!(doc.to_string(), doc_ref);
         }
-
     }
 
     mod cdata {
@@ -153,7 +150,6 @@ mod write {
 
             assert_eq!(doc.to_string(), doc_ref);
         }
-
     }
 
     mod builder {
@@ -201,7 +197,5 @@ mod write {
 
             assert_eq!(doc.to_string(), doc_ref);
         }
-
     }
-
 }

@@ -34,7 +34,6 @@ mod read {
 
             let _ = Document::parse(doc_raw.as_bytes()).expect_err("Should have errored");
         }
-
     }
 
     mod tags {
@@ -89,11 +88,10 @@ mod read {
 
             let _ = Document::parse(doc_raw.as_bytes()).expect_err("Should have errored");
         }
-
     }
 
     mod element {
-        use treexml::{Document, Element, Error};
+        use treexml::{Document, Element, TreexmlError};
 
         #[test]
         fn find_child_none() {
@@ -242,7 +240,7 @@ mod read {
             assert_eq!(root.find("a/deep/tree/leaf").unwrap(), &leaf);
 
             match root.find("z").expect_err("Should have errored") {
-                Error::ElementNotFound { .. } => {}
+                TreexmlError::ElementNotFound { .. } => {}
                 _ => panic!("Error should have been ElementNotFound"),
             }
         }
@@ -266,7 +264,7 @@ mod read {
             let cant_parse = root.find_value::<i32>("word");
             println!("cant parse was {:?}", cant_parse);
             match cant_parse.expect_err("Should have errored") {
-                Error::ValueFromStr { .. } => {}
+                TreexmlError::ValueFromStr { .. } => {}
                 _ => panic!("Error should have been ValueFromStr"),
             }
         }
@@ -319,7 +317,6 @@ mod read {
             assert_eq!(root.cdata, Some("cdata".to_owned()));
             assert_eq!(root.text, Some("texttext".to_owned()));
         }
-
     }
 
     mod complete {
@@ -369,7 +366,5 @@ mod read {
 
             assert_eq!(doc, doc_ref);
         }
-
     }
-
 }

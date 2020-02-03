@@ -42,19 +42,11 @@
 //!
 //!
 
-// `error_chain!` can recurse deeply
-#![recursion_limit = "1024"]
-
-#[macro_use]
-extern crate failure;
-
-extern crate indexmap;
-
+mod builder;
 mod errors;
 
-extern crate xml;
-
-mod builder;
+pub use builder::*;
+pub use errors::TreexmlError;
 
 use std::borrow::Cow;
 use std::fmt;
@@ -63,10 +55,6 @@ use std::iter::Filter;
 use std::slice::{Iter, IterMut};
 use std::str::FromStr;
 use std::string::ToString;
-
-pub use errors::*;
-
-pub use builder::*;
 
 use indexmap::IndexMap;
 
@@ -147,7 +135,7 @@ impl Element {
     fn parse<R: Read>(
         &mut self,
         mut reader: &mut xml::reader::EventReader<R>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), TreexmlError> {
         use xml::reader::XmlEvent;
 
         loop {
@@ -206,7 +194,10 @@ impl Element {
     }
 
     /// Write an element and its contents to `writer`
-    fn write<W: Write>(&self, writer: &mut xml::writer::EventWriter<W>) -> Result<(), Error> {
+    fn write<W: Write>(
+        &self,
+        writer: &mut xml::writer::EventWriter<W>,
+    ) -> Result<(), TreexmlError> {
         use xml::attribute::Attribute;
         use xml::name::Name;
         use xml::namespace::Namespace;
@@ -224,7 +215,7 @@ impl Element {
         let namespace = Namespace::empty();
 
         writer.write(XmlEvent::StartElement {
-            name: name,
+            name,
             attributes: Cow::Owned(attributes),
             namespace: Cow::Owned(namespace),
         })?;
@@ -262,15 +253,15 @@ impl Element {
     }
 
     /// Traverse element using an xpath-like string: root/child/a
-    pub fn find(&self, path: &str) -> Result<&Element, Error> {
+    pub fn find(&self, path: &str) -> Result<&Element, TreexmlError> {
         Self::find_path(&path.split('/').collect::<Vec<&str>>(), path, self)
     }
 
-    pub fn find_value<T: FromStr>(&self, path: &str) -> Result<Option<T>, Error> {
+    pub fn find_value<T: FromStr>(&self, path: &str) -> Result<Option<T>, TreexmlError> {
         let el = self.find(path)?;
         if let Some(text) = el.text.as_ref() {
             match T::from_str(text) {
-                Err(_) => Err(errors::Error::ValueFromStr {
+                Err(_) => Err(errors::TreexmlError::ValueFromStr {
                     t: text.to_string(),
                 }),
                 Ok(value) => Ok(Some(value)),
@@ -284,14 +275,14 @@ impl Element {
         path: &[&str],
         original: &str,
         tree: &'a Element,
-    ) -> Result<&'a Element, Error> {
+    ) -> Result<&'a Element, TreexmlError> {
         if path.is_empty() {
             return Ok(tree);
         }
 
         match tree.find_child(|t| t.name == path[0]) {
             Some(element) => Self::find_path(&path[1..], original, element),
-            None => Err(errors::Error::ElementNotFound { t: original.into() }),
+            None => Err(errors::TreexmlError::ElementNotFound { t: original.into() }),
         }
     }
 
@@ -367,7 +358,7 @@ impl Document {
     /// # Failures
     ///
     /// Passes any errors that the `xml-rs` library returns up the stack
-    pub fn parse<R: Read>(r: R) -> Result<Document, Error> {
+    pub fn parse<R: Read>(r: R) -> Result<Document, TreexmlError> {
         use xml::reader::{EventReader, XmlEvent};
 
         let mut reader = EventReader::new(r);
@@ -413,7 +404,7 @@ impl Document {
         Ok(doc)
     }
 
-    pub fn write<W: Write>(&self, mut w: &mut W) -> Result<(), Error> {
+    pub fn write<W: Write>(&self, mut w: &mut W) -> Result<(), TreexmlError> {
         self.write_with(&mut w, true, "  ", true)
     }
 
@@ -424,7 +415,7 @@ impl Document {
         document_decl: bool,
         indent_str: &'static str,
         indent: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<(), TreexmlError> {
         use xml::writer::{EmitterConfig, XmlEvent};
 
         let mut writer = EmitterConfig::new()
